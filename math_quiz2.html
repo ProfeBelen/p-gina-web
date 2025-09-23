@@ -1,0 +1,173 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Quiz de Matemática</title>
+    <style>
+        /* Estilo general del cuerpo */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        /* Estilo del contenedor del quiz */
+        #quiz-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        /* Estilo de la pregunta */
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* Estilo de los botones */
+        .option-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .option-button:hover {
+            background-color: #45a049;
+        }
+
+        /* Colores diferentes para cada botón */
+        #option1 { background-color: #2196F3; }
+        #option2 { background-color: #f44336; }
+        #option3 { background-color: #ff9800; }
+        #option4 { background-color: #2196F3; }
+        #option5 { background-color: #f44336; }
+        #option6 { background-color: #ff9800; }
+        #option1:hover { background-color: #1e87db; }
+        #option2:hover { background-color: #da190b; }
+        #option3:hover { background-color: #e68a00; }
+        #option4:hover { background-color: #1e87db; }
+        #option5:hover { background-color: #da190b; }
+        #option6:hover { background-color: #e68a00; }
+
+        /* Estilo del mensaje de resultado */
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor principal del quiz -->
+    <div id="quiz-container">
+        <!-- Primera pregunta -->
+        <h1>¿Cuál es el resultado de 2 + 2 × 3?</h1>
+        <!-- Botones de opciones para la primera pregunta -->
+        <button class="option-button" id="option1" onclick="checkAnswer(1)">6</button>
+        <button class="option-button" id="option2" onclick="checkAnswer(2)">8</button>
+        <button class="option-button" id="option3" onclick="checkAnswer(3)">12</button>
+
+        <!-- Segunda pregunta -->
+        <h1>¿Cuál es la raíz cuadrada de 16?</h1>
+        <!-- Botones de opciones para la segunda pregunta -->
+        <button class="option-button" id="option4" onclick="checkAnswer(4)">2</button>
+        <button class="option-button" id="option5" onclick="checkAnswer(5)">4</button>
+        <button class="option-button" id="option6" onclick="checkAnswer(6)">8</button>
+
+        <!-- Área para mostrar el resultado -->
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Función para verificar la respuesta seleccionada
+        function checkAnswer(option) {
+            const resultDiv = document.getElementById('result');
+            // Evaluación de la opción seleccionada
+            switch(option) {
+                // Respuestas para la primera pregunta
+                case 1:
+                    resultDiv.innerHTML = "Incorrecto. Recuerda la prioridad de las operaciones: primero multiplicación, luego suma.";
+                    resultDiv.style.color = "#f44336";
+                    break;
+                case 2:
+                    resultDiv.innerHTML = "¡Correcto! 2 + 2 × 3 = 2 + 6 = 8, siguiendo el orden de operaciones.";
+                    resultDiv.style.color = "#4CAF50";
+                    break;
+                case 3:
+                    resultDiv.innerHTML = "Incorrecto. Parece que sumaste primero. La multiplicación tiene prioridad.";
+                    resultDiv.style.color = "#f44336";
+                    break;
+                // Respuestas para la segunda pregunta
+                case 4:
+                    resultDiv.innerHTML = "Incorrecto. La raíz cuadrada de 16 no es 2. Intenta de nuevo.";
+                    resultDiv.style.color = "#f44336";
+                    break;
+                case 5:
+                    resultDiv.innerHTML = "¡Correcto! La raíz cuadrada de 16 es 4.";
+                    resultDiv.style.color = "#4CAF50";
+                    break;
+                case 6:
+                    resultDiv.innerHTML = "Incorrecto. La raíz cuadrada de 16 no es 8. Intenta de nuevo.";
+                    resultDiv.style.color = "#f44336";
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
